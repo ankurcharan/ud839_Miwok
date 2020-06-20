@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         // Find the View that shows the colors category
         TextView colors = (TextView) findViewById(R.id.colors);
 
-        family.setOnClickListener(new View.OnClickListener() {
+        colors.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Create a new intent to open the {@link NumbersActivity}
