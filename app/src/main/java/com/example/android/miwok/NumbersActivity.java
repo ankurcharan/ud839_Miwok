@@ -15,7 +15,10 @@
  */
 package com.example.android.miwok;
 
+import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -28,6 +31,27 @@ import java.util.ArrayList;
 public class NumbersActivity extends AppCompatActivity {
 
     private MediaPlayer mediaPlayer;
+    private AudioManager audioManager;
+
+    AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+
+            if(focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+
+                // short audio clips - we want to hear full
+
+                mediaPlayer.pause();
+                mediaPlayer.seekTo(0);
+            } else if(focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                // gained focus
+                mediaPlayer.start();
+            } else if(focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                // cleaup resources if lose focus
+                releaseMediaPlayer();
+            }
+        }
+    };
 
     private MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
         @Override
@@ -40,6 +64,8 @@ public class NumbersActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.word_list);
+
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         // Create an array of words
         final ArrayList<Word> words = new ArrayList<Word>();
@@ -65,15 +91,28 @@ public class NumbersActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                Word word = words.get(position);
 
                 // in case if multilpe taps are done by the user
                 releaseMediaPlayer();
 
-                mediaPlayer = MediaPlayer.create(NumbersActivity.this, word.getAudioResourceId());
-                mediaPlayer.start();
+                // get current word
+                Word word = words.get(position);
 
-                mediaPlayer.setOnCompletionListener(completionListener);
+                // request audio focus
+                int result = audioManager.requestAudioFocus(afChangeListener,
+                        // stream music
+                        AudioManager.STREAM_MUSIC,
+                        // gain audiofocus - stop others
+                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+
+                if(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                    // start playback - have focus;
+
+                    mediaPlayer = MediaPlayer.create(NumbersActivity.this, word.getAudioResourceId());
+                    mediaPlayer.start();
+
+                    mediaPlayer.setOnCompletionListener(completionListener);
+                }
             }
         });
     }
@@ -100,6 +139,8 @@ public class NumbersActivity extends AppCompatActivity {
             // setting the media player to null is an easy way to tell that the media player
             // is not configured to play an audio file at the moment.
             mediaPlayer = null;
+
+            audioManager.abandonAudioFocus(afChangeListener);
         }
     }
 }
