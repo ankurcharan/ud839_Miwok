@@ -3,6 +3,7 @@ package com.example.android.miwok;
 import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,7 +23,10 @@ https://github.com/udacity/ud839_CustomAdapter_Example/
 
 public class WordAdapter extends ArrayAdapter<Word> {
 
-    public WordAdapter(Activity context, ArrayList<Word> words) {
+    // color resource value
+    private int colorResourceId;
+
+    public WordAdapter(Activity context, ArrayList<Word> words, int colorResourceId) {
 
         // Here, we initialize the ArrayAdapter's internal storage for the context and the list.
         // the second argument is used when the ArrayAdapter is populating a single TextView.
@@ -30,6 +34,7 @@ public class WordAdapter extends ArrayAdapter<Word> {
         // going to use this second argument, so it can be any value. Here, we used 0.
 
         super(context, 0, words);
+        this.colorResourceId = colorResourceId;
     }
     @NonNull
     @Override
@@ -62,6 +67,13 @@ public class WordAdapter extends ArrayAdapter<Word> {
         } else {
             imageView.setVisibility(View.GONE);
         }
+
+        // them for list item
+        View textContainer = listItemView.findViewById(R.id.text_container);
+        // find color that resource id maps to
+        int color = ContextCompat.getColor(getContext(), colorResourceId);
+        // set background color
+        textContainer.setBackgroundColor(color);
 
         return listItemView;
     }
